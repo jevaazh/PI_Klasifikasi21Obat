@@ -378,10 +378,9 @@ def main():
                     st.session_state[ACTIVE_INFO_KEY] = info_label
                     text_content = info.get(csv_column, 'Informasi tidak tersedia')
                     st.session_state[INFO_TEXT_KEY] = text_content
-                    
-                    # Set flag untuk memainkan TTS setelah UI diupdate
-                    st.session_state[SHOULD_PLAY_TTS_KEY] = True
-                    st.rerun()  # refresh halaman untuk update panel
+
+                    # 🔊 Langsung mainkan TTS tanpa rerun
+                    play_tts_hidden(f"{info_label}: {text_content}")
 
         with right:
             active = st.session_state[ACTIVE_INFO_KEY]

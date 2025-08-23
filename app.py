@@ -13,7 +13,7 @@ import time
 
 # ========== KONFIGURASI ==========
 st.set_page_config(
-    page_title="ObatVision", 
+    page_title="Apasi Bang Namanya", 
     layout="centered",
     page_icon="💊"
 )

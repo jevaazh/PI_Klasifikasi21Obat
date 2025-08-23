@@ -189,7 +189,7 @@ def main():
             st.image(
                 img, 
                 caption=f"Hasil Deteksi: {predicted_label}", 
-                use_column_width=True
+                use_container_width=True
             )
         
         with col2:

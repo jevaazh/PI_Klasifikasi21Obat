@@ -22,22 +22,23 @@ st.set_page_config(
 st.markdown("""
 <style>
 /* Title styling */
-.app-title{
+.app-title {
   font-size: 1.8rem;
   font-weight: 700;
   margin: 0 0 .25rem 0;
 }
-.app-sub{
+.app-sub {
   font-size: .95rem;
-  color: #6c757d;
+  color: var(--text-color-secondary);
   margin-bottom: .75rem;
 }
-hr{ border: none; border-top: 1px solid #e9ecef; margin: 1rem 0; }
+hr { border: none; border-top: 1px solid var(--border-color); margin: 1rem 0; }
 
 /* Buttons */
 .stButton > button {
-    background-color: #0f172a !important;
-    border: 2px solid #60749d !important;
+    background-color: var(--primary-color) !important;
+    color: var(--text-color) !important;
+    border: 2px solid var(--primary-color) !important;
     border-radius: 12px !important;
     padding: 0.55rem 1rem !important;
     margin: 0.25rem 0 !important;
@@ -46,35 +47,37 @@ hr{ border: none; border-top: 1px solid #e9ecef; margin: 1rem 0; }
     width: 100% !important;
 }
 .stButton > button:hover {
-    background-color: #e9ecef !important;
-    color: #1d232f !important;
-    border-color: #0f172a !important;
+    background-color: var(--secondary-background-color) !important;
+    color: var(--text-color) !important;
+    border-color: var(--primary-color) !important;
     transform: translateY(-1px);
 }
 
-/* Right panel info box fixed height */
-.info-panel{
-  border: 1px solid #60749d;
+/* Active button styling */
+.stButton > button[data-active="true"] {
+    background-color: var(--primary-color) !important;
+    color: white !important;
+}
+
+/* Right panel info box */
+.info-panel {
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 1rem;
-  min-height: 220px; /* tinggi seragam */
-  background: #1d232f;
+  min-height: 220px;
+  background: var(--background-color);
+  color: var(--text-color);
 }
 
 /* Radio label as section label */
-.block-label{
+.block-label {
   font-weight: 600;
   margin-bottom: .25rem;
+  color: var(--text-color);
 }
 
 /* Hide default radio label since we render custom */
-div[data-baseweb="radio"] > div:first-child{ display:none; }
-
-/* Active button styling */
-.stButton > button[data-active="true"] {
-    background-color: #60749d !important;
-    color: white !important;
-}
+div[data-baseweb="radio"] > div:first-child { display:none; }
 
 /* Hidden audio player */
 .hidden-audio {
@@ -85,6 +88,7 @@ div[data-baseweb="radio"] > div:first-child{ display:none; }
 }
 </style>
 """, unsafe_allow_html=True)
+
 
 # ================== UTIL: AUDIO ================== #
 def _render_audio_base64_hidden(audio_bytes: bytes, autoplay: bool):

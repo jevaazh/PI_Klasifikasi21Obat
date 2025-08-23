@@ -58,7 +58,7 @@ hr{ border: none; border-top: 1px solid #e9ecef; margin: 1rem 0; }
   border-radius: 12px;
   padding: 1rem;
   min-height: 220px; /* tinggi seragam */
-  background: #A9A9A9;
+  background: #4B4B4C;
 }
 
 /* Radio label as section label */

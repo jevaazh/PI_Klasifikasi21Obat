@@ -435,5 +435,5 @@ def main():
             - Foto kemasan asli untuk akurasi terbaik.
             """)
 
-if _name_ == "_main_":
+if __name__ == "__main__":
     main()

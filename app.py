@@ -325,11 +325,11 @@ def main():
             if st.session_state[ACTIVE_INFO_KEY] == label:
                 st.session_state[ACTIVE_INFO_KEY] = None
                 # hentikan audio ketika menutup
-                stop_all_audio()
+                # stop_all_audio()
             else:
                 st.session_state[ACTIVE_INFO_KEY] = label
                 # hentikan audio sebelumnya (jika ada)
-                stop_all_audio()
+                # stop_all_audio()
 
         with left:
             st.markdown('<div class="block-label">Pilih informasi:</div>', unsafe_allow_html=True)

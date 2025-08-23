@@ -36,7 +36,7 @@ hr{ border: none; border-top: 1px solid #e9ecef; margin: 1rem 0; }
 
 /* Buttons */
 .stButton > button {
-    background-color: #417eba !important;
+    background-color: #0f172a !important;
     border: 2px solid #e9ecef !important;
     border-radius: 12px !important;
     padding: 0.55rem 1rem !important;

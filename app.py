@@ -320,9 +320,13 @@ def main():
 
         left, right = st.columns([1, 2])
 
+        # Key session
+        ACTIVE_INFO_KEY = "active_info"
+        if ACTIVE_INFO_KEY not in st.session_state:
+            st.session_state[ACTIVE_INFO_KEY] = None
+
         # Helper untuk toggle tombol info
         def toggle_info(label: str):
-            # setiap kali tombol ditekan, selalu set aktif
             st.session_state[ACTIVE_INFO_KEY] = label  
             stop_all_audio()  # hentikan audio lama sebelum mulai baru
 
@@ -362,16 +366,17 @@ def main():
                 </div>
                 """, unsafe_allow_html=True)
 
-                # Otomatis TTS ketika menu ditekan
+                # Hanya bicara ketika ada menu yang dipilih
                 speak_text(f"{active}: {text}", autoplay=True)
+
             else:
-                # Kosongkan panel & hentikan audio
                 st.markdown(f"""
                 <div class="info-panel">
                     <em>Tidak ada informasi yang dipilih.</em>
                 </div>
                 """, unsafe_allow_html=True)
-                stop_all_audio()
+                # 👇 baris ini dihapus biar ga auto stop audio
+                # stop_all_audio()
 
     else:
         # ======== TAMPILAN AWAL ======== #

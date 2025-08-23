@@ -54,9 +54,17 @@ hr { border: none; border-top: 1px solid var(--border-color); margin: 1rem 0; }
 }
 
 /* Active button styling */
-.stButton > button[data-active="true"] {
+.stButton > button {
     background-color: var(--primary-color) !important;
-    color: white !important;
+    color: var(--text-color) !important;
+    border: 2px solid rgba(255,255,255,0.4) !important; /* semi transparan */
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2) !important;   /* efek shadow */
+    border-radius: 12px !important;
+    padding: 0.55rem 1rem !important;
+    margin: 0.25rem 0 !important;
+    transition: all 0.2s ease !important;
+    font-weight: 600 !important;
+    width: 100% !important;
 }
 
 /* Right panel info box */

@@ -297,7 +297,7 @@ def main():
                 predicted_index = int(np.argmax(prediction))
                 confidence = float(prediction[predicted_index])  # 0..1
 
-                if confidence < 0.00:
+                if confidence < 0.40:
                     st.error("❌ Gambar tidak terdeteksi sebagai obat. Silakan coba lagi dengan foto yang lebih jelas.")
                     stop_all_audio()
                     return

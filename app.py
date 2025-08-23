@@ -105,7 +105,7 @@ def create_audio_player(text, lang='id'):
 # ========== MAIN APP ==========
 def main():
     # Header
-    st.title("💊 ObatVision: Deteksi dan Info Obat")
+    st.title("💊 Apa Bang Namanya : Deteksi dan Info Obat")
     st.markdown("---")
     
     # Load model dan dataset

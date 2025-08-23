@@ -120,7 +120,7 @@ h1.ms-title { margin-bottom: .2rem; }
 """, unsafe_allow_html=True)
 
 # ============================== PARAMETER & UTILITAS ===============================
-MIN_CONFIDENCE = 0.40  # ambang tolak gambar yang tidak jelas/ bukan obat
+MIN_CONFIDENCE = 0.00  # ambang tolak gambar yang tidak jelas/ bukan obat
 
 def center_crop_square(pil_img: Image.Image) -> Image.Image:
     """Crop tengah menjadi 1:1 (persegi)."""

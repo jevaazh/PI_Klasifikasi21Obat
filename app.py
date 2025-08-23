@@ -313,20 +313,16 @@ def main():
         if st.button("🔊 Dengarkan Info Obat"):
             audio_html = create_audio_player(main_text)
             st.markdown(audio_html, unsafe_allow_html=True)
-
-        # ======== INFORMASI LAINNYA (KIRI: MENU VERTIKAL, KANAN: PANEL) ======== #
+        
+        # ======== INFORMASI LAINNYA (KIRI: MENU VERTIKAL, KANAN: PANEL) ========
         st.markdown("---")
         st.subheader("📂 Informasi Lainnya")
 
         left, right = st.columns([1, 2])
 
-        # Key session
-        ACTIVE_INFO_KEY = "active_info"
-        if ACTIVE_INFO_KEY not in st.session_state:
-            st.session_state[ACTIVE_INFO_KEY] = None
-
         # Helper untuk toggle tombol info
         def toggle_info(label: str):
+            # setiap kali tombol ditekan, selalu set aktif
             st.session_state[ACTIVE_INFO_KEY] = label  
             stop_all_audio()  # hentikan audio lama sebelum mulai baru
 
@@ -359,31 +355,24 @@ def main():
                 else:
                     text = "Informasi tidak tersedia"
 
-                # Panel tampilkan teks
+                # Panel dengan tinggi seragam
                 st.markdown(f"""
-                <div class="info-panel">
+                <div class="info-panel" style="padding:10px; border:1px solid #ddd; border-radius:8px; min-height:120px;">
                     <strong>{active} {info.get('nama_obat','')}:</strong><br/>{text}
                 </div>
                 """, unsafe_allow_html=True)
 
-                # === TTS otomatis play ===
-                audio_path = speak_text(f"{active}: {text}")  # fungsi ini return path/URL file audio
-                if audio_path:
-                    st.markdown(
-                        f"""
-                        <audio autoplay hidden>
-                            <source src="{audio_path}" type="audio/mp3">
-                        </audio>
-                        """,
-                        unsafe_allow_html=True
-                    )
+                # Otomatis TTS ketika menu ditekan
+                speak_text(f"{active}: {text}", autoplay=True)
             else:
+                # Kosongkan panel & hentikan audio
                 st.markdown(f"""
-                <div class="info-panel">
+                <div class="info-panel" style="padding:10px; border:1px solid #ddd; border-radius:8px; min-height:120px;">
                     <em>Tidak ada informasi yang dipilih.</em>
                 </div>
                 """, unsafe_allow_html=True)
-
+                stop_all_audio()
+                
     else:
         # ======== TAMPILAN AWAL ======== #
         st.markdown("""

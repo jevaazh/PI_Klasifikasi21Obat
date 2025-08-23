@@ -1,0 +1,5 @@
+data/
+*.zip
+.tar
+_pycache_/
+.env

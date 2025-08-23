@@ -322,14 +322,9 @@ def main():
 
         # Helper untuk toggle tombol info
         def toggle_info(label: str):
-            if st.session_state[ACTIVE_INFO_KEY] == label:
-                st.session_state[ACTIVE_INFO_KEY] = None
-                # hentikan audio ketika menutup
-                # stop_all_audio()
-            else:
-                st.session_state[ACTIVE_INFO_KEY] = label
-                # hentikan audio sebelumnya (jika ada)
-                # stop_all_audio()
+            # setiap kali tombol ditekan, selalu set aktif
+            st.session_state[ACTIVE_INFO_KEY] = label  
+            stop_all_audio()  # hentikan audio lama sebelum mulai baru
 
         with left:
             st.markdown('<div class="block-label">Pilih informasi:</div>', unsafe_allow_html=True)

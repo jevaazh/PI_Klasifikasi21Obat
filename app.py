@@ -37,7 +37,7 @@ hr{ border: none; border-top: 1px solid #e9ecef; margin: 1rem 0; }
 /* Buttons */
 .stButton > button {
     background-color: #0f172a !important;
-    border: 2px solid #e9ecef !important;
+    border: 2px solid #333e54 !important;
     border-radius: 12px !important;
     padding: 0.55rem 1rem !important;
     margin: 0.25rem 0 !important;
@@ -54,7 +54,7 @@ hr{ border: none; border-top: 1px solid #e9ecef; margin: 1rem 0; }
 
 /* Right panel info box fixed height */
 .info-panel{
-  border: 1px solid #e9ecef;
+  border: 1px solid #333e54;
   border-radius: 12px;
   padding: 1rem;
   min-height: 220px; /* tinggi seragam */

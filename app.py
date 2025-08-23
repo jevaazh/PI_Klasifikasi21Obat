@@ -75,19 +75,29 @@ div[data-baseweb="radio"] > div:first-child{ display:none; }
     background-color: #60749d !important;
     color: white !important;
 }
+
+/* Hidden audio player */
+.hidden-audio {
+    display: none !important;
+    visibility: hidden !important;
+    position: absolute !important;
+    left: -9999px !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
 # ================== UTIL: AUDIO ================== #
-def _render_audio_base64(audio_bytes: bytes, autoplay: bool):
+def _render_audio_base64_hidden(audio_bytes: bytes, autoplay: bool):
+    """Render audio player yang disembunyikan"""
     audio_base64 = base64.b64encode(audio_bytes).decode()
     auto = "autoplay" if autoplay else ""
     audio_id = f"audio_{int(time.time() * 1000)}"  # unique ID
     return f"""
-    <audio id="{audio_id}" {auto} controls style="width:100%;">
-        <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
-        Your browser does not support the audio element.
-    </audio>
+    <div class="hidden-audio">
+        <audio id="{audio_id}" {auto} controls>
+            <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
+        </audio>
+    </div>
     """
 
 def stop_all_audio():
@@ -102,16 +112,11 @@ def stop_all_audio():
     </script>
     """, unsafe_allow_html=True)
 
-def speak_text(text, lang='id', autoplay=True):
+def play_tts_hidden(text, lang='id'):
     """
-    Konversi teks ke audio dan render <audio>. 
-    Catatan: Untuk suara yang benar-benar natural (mirip manusia),
-    sebaiknya integrasi layanan TTS seperti Azure/ElevenLabs.
+    Putar TTS dengan audio player tersembunyi (tidak terlihat di UI)
     """
     try:
-        # Hentikan audio yang sedang berjalan terlebih dahulu
-        stop_all_audio()
-        
         # tambah sedikit tanda baca agar jedanya lebih natural
         refined = text.replace(". ", ".  ").replace(", ", ",  ")
         with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as tmp_file:
@@ -120,12 +125,16 @@ def speak_text(text, lang='id', autoplay=True):
             with open(tmp_file.name, 'rb') as f:
                 audio_bytes = f.read()
         os.unlink(tmp_file.name)
-        st.markdown(_render_audio_base64(audio_bytes, autoplay=autoplay), unsafe_allow_html=True)
+        
+        # Render audio player tersembunyi dengan autoplay
+        audio_html = _render_audio_base64_hidden(audio_bytes, autoplay=True)
+        st.markdown(audio_html, unsafe_allow_html=True)
+        
     except Exception as e:
         st.error(f"Gagal memutar audio: {str(e)}")
 
-def create_audio_player(text, lang='id'):
-    """Buat audio player (tanpa autoplay) untuk TTS utama."""
+def create_audio_player_visible(text, lang='id'):
+    """Buat audio player terlihat untuk TTS utama."""
     try:
         refined = text.replace(". ", ".  ").replace(", ", ",  ")
         with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as tmp_file:
@@ -134,7 +143,15 @@ def create_audio_player(text, lang='id'):
             with open(tmp_file.name, 'rb') as f:
                 audio_bytes = f.read()
         os.unlink(tmp_file.name)
-        return _render_audio_base64(audio_bytes, autoplay=False)
+        
+        # Audio player terlihat tanpa autoplay
+        audio_base64 = base64.b64encode(audio_bytes).decode()
+        return f"""
+        <audio controls style="width:100%;">
+            <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
+            Your browser does not support the audio element.
+        </audio>
+        """
     except Exception as e:
         return f"<p>Error creating audio: {str(e)}</p>"
 
@@ -188,12 +205,15 @@ def preprocess_for_model(pil_img: Image.Image, size=(256, 256)):
 
 # ========== STATE KEYS ========== #
 ACTIVE_INFO_KEY = "active_info"   # menyimpan menu info yang aktif
-TTS_COUNTER_KEY = "tts_counter"   # counter untuk memaksa refresh TTS
+INFO_TEXT_KEY = "info_text"       # menyimpan teks info yang aktif
+SHOULD_PLAY_TTS_KEY = "should_play_tts"  # flag untuk trigger TTS
 
 if ACTIVE_INFO_KEY not in st.session_state:
     st.session_state[ACTIVE_INFO_KEY] = None
-if TTS_COUNTER_KEY not in st.session_state:
-    st.session_state[TTS_COUNTER_KEY] = 0
+if INFO_TEXT_KEY not in st.session_state:
+    st.session_state[INFO_TEXT_KEY] = ""
+if SHOULD_PLAY_TTS_KEY not in st.session_state:
+    st.session_state[SHOULD_PLAY_TTS_KEY] = False
 
 # ================== MAIN APP ================== #
 def main():
@@ -327,7 +347,7 @@ def main():
         )
 
         if st.button("🔊 Dengarkan Info Obat"):
-            audio_html = create_audio_player(main_text)
+            audio_html = create_audio_player_visible(main_text)
             st.markdown(audio_html, unsafe_allow_html=True)
         
         # ======== INFORMASI LAINNYA (KIRI: MENU VERTIKAL, KANAN: PANEL) ========
@@ -351,41 +371,34 @@ def main():
             # Render tombol-tombol informasi
             for button_text, info_label, csv_column in info_options:
                 if st.button(button_text, key=f"btn_{csv_column}"):
-                    # Set info yang aktif
+                    # Hentikan audio yang sedang berjalan
+                    stop_all_audio()
+                    
+                    # Set info yang aktif dan teks
                     st.session_state[ACTIVE_INFO_KEY] = info_label
-                    st.session_state[TTS_COUNTER_KEY] += 1  # increment counter untuk trigger refresh
-                    
-                    # Dapatkan teks dari CSV
                     text_content = info.get(csv_column, 'Informasi tidak tersedia')
+                    st.session_state[INFO_TEXT_KEY] = text_content
                     
-                    # Langsung putar TTS tanpa perlu tombol play
-                    speak_text(f"{info_label}: {text_content}", autoplay=True)
+                    # Set flag untuk memainkan TTS setelah UI diupdate
+                    st.session_state[SHOULD_PLAY_TTS_KEY] = True
                     st.rerun()  # refresh halaman untuk update panel
 
         with right:
             active = st.session_state[ACTIVE_INFO_KEY]
-            if active:
-                # Tentukan kolom CSV berdasarkan label aktif
-                csv_column_map = {
-                    "Efek Samping": "efek_samping",
-                    "Pantangan Makanan": "pantangan_makanan", 
-                    "Interaksi Negatif": "interaksi_negatif",
-                    "Jika Lupa Minum?": "jika_lupa_minum",
-                    "Cara Penyimpanan": "penyimpanan"
-                }
-                
-                csv_column = csv_column_map.get(active)
-                if csv_column:
-                    text = info.get(csv_column, 'Informasi tidak tersedia')
-                else:
-                    text = "Informasi tidak tersedia"
+            if active and st.session_state[INFO_TEXT_KEY]:
+                text = st.session_state[INFO_TEXT_KEY]
 
-                # Panel dengan tinggi seragam
+                # Panel dengan tinggi seragam - tampilkan dulu
                 st.markdown(f"""
                 <div class="info-panel" style="padding:10px; border:1px solid #ddd; border-radius:8px; min-height:120px;">
                     <strong>{active} {info.get('nama_obat','')}:</strong><br/>{text}
                 </div>
                 """, unsafe_allow_html=True)
+
+                # Setelah panel ditampilkan, baru mainkan TTS jika diperlukan
+                if st.session_state[SHOULD_PLAY_TTS_KEY]:
+                    play_tts_hidden(f"{active}: {text}")
+                    st.session_state[SHOULD_PLAY_TTS_KEY] = False  # reset flag
 
             else:
                 # Panel kosong

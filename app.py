@@ -182,7 +182,7 @@ def main():
                 st.error(f"Gagal memproses gambar: {str(e)}")
                 return
         
-        # ========== HASIL PREDIKSI ==========
+        # ========== HASIL PREDIKSI ==========        
         col1, col2 = st.columns([1, 1])
         
         with col1:
@@ -202,7 +202,7 @@ def main():
             **Jenis:** {info['jenis']}  
             """)
         
-        # ========== INFO LENGKAP ==========
+        # ========== INFO LENGKAP ==========        
         st.markdown("---")
         st.subheader("📋 Informasi Lengkap Obat")
         
@@ -213,48 +213,30 @@ def main():
             **Catatan:** {info['catatan']}  
             """)
         
-        # ========== PERINGATAN ==========
+        # ========== PERINGATAN ==========        
         st.warning("""
         ⚠️ **PERINGATAN PENTING:** 
         🥧 Aturan minum dapat berbeda-beda pada setiap orang. Harus mengikuti saran dari dokter yang sudah cek kondisi pasien. 
         Kira-kira solusinya mungkin bisa menambahkan fitur untuk koreksi jadwal minum obat, jika memungkinkan.
         """)
         
-        # Text untuk TTS
+        # Text untuk TTS utama (manual, tidak auto)        
         main_text = f"""
         Obat yang terdeteksi adalah {info['nama_obat']}. 
         Aturan minum: {info['aturan_minum']}. 
         Perhatian: {info['catatan']}. 
-        Peringatan: 🥧 Aturan minum dapat berbeda-beda pada setiap orang. Harap ikuti petunjuk dari dokter yang sudah memeriksa kondisi Anda.
+        Peringatan: aturan minum dapat berbeda-beda pada setiap orang. 
+        Harap ikuti petunjuk dari dokter yang sudah memeriksa kondisi Anda.
         """
         
-        # Auto play audio
-        speak_text(main_text)
+        # Tombol manual untuk TTS utama
+        if st.button("🔊 Dengarkan Info Obat"):
+            audio_html = create_audio_player(main_text)
+            st.markdown(audio_html, unsafe_allow_html=True)
         
-        # ========== MENU LANJUTAN ==========
+        # ========== MENU LANJUTAN ==========        
         st.markdown("---")
         st.subheader("📂 Lihat lebih lanjut:")
-        
-        # Custom CSS for buttons
-        st.markdown("""
-        <style>
-        .stButton > button {
-            background-color: #417eba;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            padding: 0.5rem 1rem;
-            margin: 0.3rem 0;
-            transition: all 0.3s ease;
-            font-weight: 500;
-            width: 100%;
-        }
-        .stButton > button:hover {
-            background-color: #e9ecef;
-            border-color: #007bff;
-            transform: translateY(-2px);
-        }
-        </style>
-        """, unsafe_allow_html=True)
         
         col1, col2 = st.columns(2)
         
@@ -262,33 +244,28 @@ def main():
             if st.button("🔴 Efek Samping", key="efek_samping"):
                 efek_samping = info.get('efek_samping', 'Informasi tidak tersedia')
                 st.info(f"**Efek Samping {info['nama_obat']}:**\n{efek_samping}")
-                audio_html = create_audio_player(f"Efek samping dari {info['nama_obat']}: {efek_samping}")
-                st.markdown(audio_html, unsafe_allow_html=True)
+                speak_text(f"Efek samping dari {info['nama_obat']}: {efek_samping}")
             
             if st.button("🚫 Pantangan Makanan", key="pantangan"):
                 pantangan = info.get('pantangan_makanan', 'Informasi tidak tersedia')
                 st.info(f"**Pantangan Makanan:**\n{pantangan}")
-                audio_html = create_audio_player(f"Pantangan makanan: {pantangan}")
-                st.markdown(audio_html, unsafe_allow_html=True)
+                speak_text(f"Pantangan makanan: {pantangan}")
             
             if st.button("⚠️ Interaksi Negatif", key="interaksi"):
                 interaksi = info.get('interaksi_negatif', 'Informasi tidak tersedia')
                 st.info(f"**Interaksi Negatif:**\n{interaksi}")
-                audio_html = create_audio_player(f"Interaksi negatif: {interaksi}")
-                st.markdown(audio_html, unsafe_allow_html=True)
+                speak_text(f"Interaksi negatif: {interaksi}")
         
         with col2:
             if st.button("🤔 Jika Lupa Minum?", key="lupa_minum"):
                 lupa_minum = info.get('jika_lupa_minum', 'Informasi tidak tersedia')
                 st.info(f"**Jika Lupa Minum:**\n{lupa_minum}")
-                audio_html = create_audio_player(f"Jika lupa minum: {lupa_minum}")
-                st.markdown(audio_html, unsafe_allow_html=True)
+                speak_text(f"Jika lupa minum: {lupa_minum}")
             
             if st.button("📦 Cara Penyimpanan", key="penyimpanan"):
                 penyimpanan = info.get('penyimpanan', 'Informasi tidak tersedia')
                 st.info(f"**Cara Penyimpanan:**\n{penyimpanan}")
-                audio_html = create_audio_player(f"Cara penyimpanan: {penyimpanan}")
-                st.markdown(audio_html, unsafe_allow_html=True)
+                speak_text(f"Cara penyimpanan: {penyimpanan}")
     
     else:
         # ========== TAMPILAN AWAL ==========

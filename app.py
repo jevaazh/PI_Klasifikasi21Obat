@@ -359,24 +359,30 @@ def main():
                 else:
                     text = "Informasi tidak tersedia"
 
-                # Panel dengan tinggi seragam
+                # Panel tampilkan teks
                 st.markdown(f"""
                 <div class="info-panel">
                     <strong>{active} {info.get('nama_obat','')}:</strong><br/>{text}
                 </div>
                 """, unsafe_allow_html=True)
 
-                # Hanya bicara ketika ada menu yang dipilih
-                speak_text(f"{active}: {text}", autoplay=True)
-
+                # === TTS otomatis play ===
+                audio_path = speak_text(f"{active}: {text}")  # fungsi ini return path/URL file audio
+                if audio_path:
+                    st.markdown(
+                        f"""
+                        <audio autoplay hidden>
+                            <source src="{audio_path}" type="audio/mp3">
+                        </audio>
+                        """,
+                        unsafe_allow_html=True
+                    )
             else:
                 st.markdown(f"""
                 <div class="info-panel">
                     <em>Tidak ada informasi yang dipilih.</em>
                 </div>
                 """, unsafe_allow_html=True)
-                # 👇 baris ini dihapus biar ga auto stop audio
-                # stop_all_audio()
 
     else:
         # ======== TAMPILAN AWAL ======== #

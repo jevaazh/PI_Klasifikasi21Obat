@@ -48,7 +48,7 @@ hr{ border: none; border-top: 1px solid #e9ecef; margin: 1rem 0; }
 .stButton > button:hover {
     background-color: #e9ecef !important;
     color: #0f172a !important;
-    border-color: #007bff !important;
+    border-color: #0f172a !important;
     transform: translateY(-1px);
 }
 

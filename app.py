@@ -69,6 +69,12 @@ hr{ border: none; border-top: 1px solid #e9ecef; margin: 1rem 0; }
 
 /* Hide default radio label since we render custom */
 div[data-baseweb="radio"] > div:first-child{ display:none; }
+
+/* Active button styling */
+.stButton > button[data-active="true"] {
+    background-color: #60749d !important;
+    color: white !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -76,12 +82,25 @@ div[data-baseweb="radio"] > div:first-child{ display:none; }
 def _render_audio_base64(audio_bytes: bytes, autoplay: bool):
     audio_base64 = base64.b64encode(audio_bytes).decode()
     auto = "autoplay" if autoplay else ""
+    audio_id = f"audio_{int(time.time() * 1000)}"  # unique ID
     return f"""
-    <audio {auto} controls style="width:100%;">
+    <audio id="{audio_id}" {auto} controls style="width:100%;">
         <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
         Your browser does not support the audio element.
     </audio>
     """
+
+def stop_all_audio():
+    """Hentikan semua audio yang sedang berjalan"""
+    st.markdown("""
+    <script>
+    const audios = document.getElementsByTagName('audio');
+    for (let a of audios){ 
+        a.pause(); 
+        a.currentTime = 0; 
+    }
+    </script>
+    """, unsafe_allow_html=True)
 
 def speak_text(text, lang='id', autoplay=True):
     """
@@ -90,6 +109,9 @@ def speak_text(text, lang='id', autoplay=True):
     sebaiknya integrasi layanan TTS seperti Azure/ElevenLabs.
     """
     try:
+        # Hentikan audio yang sedang berjalan terlebih dahulu
+        stop_all_audio()
+        
         # tambah sedikit tanda baca agar jedanya lebih natural
         refined = text.replace(". ", ".  ").replace(", ", ",  ")
         with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as tmp_file:
@@ -115,15 +137,6 @@ def create_audio_player(text, lang='id'):
         return _render_audio_base64(audio_bytes, autoplay=False)
     except Exception as e:
         return f"<p>Error creating audio: {str(e)}</p>"
-
-def stop_all_audio():
-    """Hentikan audio dengan JS (pause semua <audio>)"""
-    st.markdown("""
-    <script>
-    const audios = document.getElementsByTagName('audio');
-    for (let a of audios){ a.pause(); a.currentTime = 0; }
-    </script>
-    """, unsafe_allow_html=True)
 
 # ================== LOAD MODEL & DATA ================== #
 @st.cache_resource
@@ -175,9 +188,12 @@ def preprocess_for_model(pil_img: Image.Image, size=(256, 256)):
 
 # ========== STATE KEYS ========== #
 ACTIVE_INFO_KEY = "active_info"   # menyimpan menu info yang aktif
+TTS_COUNTER_KEY = "tts_counter"   # counter untuk memaksa refresh TTS
 
 if ACTIVE_INFO_KEY not in st.session_state:
     st.session_state[ACTIVE_INFO_KEY] = None
+if TTS_COUNTER_KEY not in st.session_state:
+    st.session_state[TTS_COUNTER_KEY] = 0
 
 # ================== MAIN APP ================== #
 def main():
@@ -211,7 +227,7 @@ def main():
             help="Format yang didukung: JPG, JPEG, PNG"
         )
 
-        st.markdown("*ATAU*")
+        st.markdown("ATAU")
 
         # Toggle kamera
         enable_camera = st.toggle(
@@ -281,8 +297,8 @@ def main():
             st.subheader(f"💊 {info['nama_obat']}")
             st.metric("🎯 Akurasi Prediksi", f"{confidence*100:.2f}%")
             st.markdown(f"""
-            *Golongan:* {info.get('golongan','-')}  
-            *Jenis:* {info.get('jenis','-')}  
+            Golongan: {info.get('golongan','-')}  
+            Jenis: {info.get('jenis','-')}  
             """)
 
         # ======== DETAIL INFORMASI ======== #
@@ -290,14 +306,14 @@ def main():
         st.subheader("📋 Detail Informasi")
         with st.expander("🔍 Lihat Detail", expanded=True):
             st.markdown(f"""
-            *Manfaat:* {info.get('manfaat','-')}  
-            *Aturan Minum:* {info.get('aturan_minum','-')}  
-            *Catatan:* {info.get('catatan','-')}  
+            Manfaat: {info.get('manfaat','-')}  
+            Aturan Minum: {info.get('aturan_minum','-')}  
+            Catatan: {info.get('catatan','-')}  
             """)
 
         # ======== PERINGATAN ======== #
         st.warning("""
-        ⚠ *PERINGATAN PENTING:* 
+        ⚠ PERINGATAN PENTING: 
         Aturan minum dapat berbeda pada setiap orang. Ikuti saran dokter yang sudah memeriksa kondisi pasien.
         """)
 
@@ -320,38 +336,47 @@ def main():
 
         left, right = st.columns([1, 2])
 
-        # Helper untuk toggle tombol info
-        def toggle_info(label: str):
-            # setiap kali tombol ditekan, selalu set aktif
-            st.session_state[ACTIVE_INFO_KEY] = label  
-            stop_all_audio()  # hentikan audio lama sebelum mulai baru
+        # Daftar informasi yang tersedia
+        info_options = [
+            ("🔴 Efek Samping", "Efek Samping", "efek_samping"),
+            ("🚫 Pantangan Makanan", "Pantangan Makanan", "pantangan_makanan"),
+            ("⚠ Interaksi Negatif", "Interaksi Negatif", "interaksi_negatif"),
+            ("🤔 Jika Lupa Minum?", "Jika Lupa Minum?", "jika_lupa_minum"),
+            ("📦 Cara Penyimpanan", "Cara Penyimpanan", "penyimpanan")
+        ]
 
         with left:
             st.markdown('<div class="block-label">Pilih informasi:</div>', unsafe_allow_html=True)
-            if st.button("🔴 Efek Samping"):
-                toggle_info("Efek Samping")
-            if st.button("🚫 Pantangan Makanan"):
-                toggle_info("Pantangan Makanan")
-            if st.button("⚠ Interaksi Negatif"):
-                toggle_info("Interaksi Negatif")
-            if st.button("🤔 Jika Lupa Minum?"):
-                toggle_info("Jika Lupa Minum?")
-            if st.button("📦 Cara Penyimpanan"):
-                toggle_info("Cara Penyimpanan")
+            
+            # Render tombol-tombol informasi
+            for button_text, info_label, csv_column in info_options:
+                if st.button(button_text, key=f"btn_{csv_column}"):
+                    # Set info yang aktif
+                    st.session_state[ACTIVE_INFO_KEY] = info_label
+                    st.session_state[TTS_COUNTER_KEY] += 1  # increment counter untuk trigger refresh
+                    
+                    # Dapatkan teks dari CSV
+                    text_content = info.get(csv_column, 'Informasi tidak tersedia')
+                    
+                    # Langsung putar TTS tanpa perlu tombol play
+                    speak_text(f"{info_label}: {text_content}", autoplay=True)
+                    st.rerun()  # refresh halaman untuk update panel
 
         with right:
             active = st.session_state[ACTIVE_INFO_KEY]
             if active:
-                if active == "Efek Samping":
-                    text = info.get('efek_samping', 'Informasi tidak tersedia')
-                elif active == "Pantangan Makanan":
-                    text = info.get('pantangan_makanan', 'Informasi tidak tersedia')
-                elif active == "Interaksi Negatif":
-                    text = info.get('interaksi_negatif', 'Informasi tidak tersedia')
-                elif active == "Jika Lupa Minum?":
-                    text = info.get('jika_lupa_minum', 'Informasi tidak tersedia')
-                elif active == "Cara Penyimpanan":
-                    text = info.get('penyimpanan', 'Informasi tidak tersedia')
+                # Tentukan kolom CSV berdasarkan label aktif
+                csv_column_map = {
+                    "Efek Samping": "efek_samping",
+                    "Pantangan Makanan": "pantangan_makanan", 
+                    "Interaksi Negatif": "interaksi_negatif",
+                    "Jika Lupa Minum?": "jika_lupa_minum",
+                    "Cara Penyimpanan": "penyimpanan"
+                }
+                
+                csv_column = csv_column_map.get(active)
+                if csv_column:
+                    text = info.get(csv_column, 'Informasi tidak tersedia')
                 else:
                     text = "Informasi tidak tersedia"
 
@@ -362,16 +387,13 @@ def main():
                 </div>
                 """, unsafe_allow_html=True)
 
-                # Otomatis TTS ketika menu ditekan
-                speak_text(f"{active}: {text}", autoplay=True)
             else:
-                # Kosongkan panel & hentikan audio
+                # Panel kosong
                 st.markdown(f"""
                 <div class="info-panel" style="padding:10px; border:1px solid #ddd; border-radius:8px; min-height:120px;">
-                    <em>Tidak ada informasi yang dipilih.</em>
+                    <em>Pilih salah satu informasi di sebelah kiri untuk melihat detail dan mendengarkan penjelasan.</em>
                 </div>
                 """, unsafe_allow_html=True)
-                stop_all_audio()
                 
     else:
         # ======== TAMPILAN AWAL ======== #
@@ -385,18 +407,18 @@ def main():
 
         with st.expander("📖 Panduan Penggunaan", expanded=True):
             st.markdown("""
-            *Langkah-langkah:*
-            1. *Upload Gambar* - Klik "Unggah Gambar Obat" dan pilih file gambar.
-            2. *Atau Ambil Foto* - Aktifkan kamera dan ambil foto (rasio 1:1).
-            3. *Tunggu Analisis* - AI menganalisis gambar obat Anda.
-            4. *Lihat Hasil* - Dapatkan informasi ringkas & detail obat.
-            5. *Dengarkan Audio* - Tekan tombol untuk mendengarkan narasi.
-            6. *Informasi Lainnya* - Pilih topik; info muncul di panel kanan dan otomatis dibacakan.
+            Langkah-langkah:
+            1. Upload Gambar - Klik "Unggah Gambar Obat" dan pilih file gambar.
+            2. Atau Ambil Foto - Aktifkan kamera dan ambil foto (rasio 1:1).
+            3. Tunggu Analisis - AI menganalisis gambar obat Anda.
+            4. Lihat Hasil - Dapatkan informasi ringkas & detail obat.
+            5. Dengarkan Audio - Tekan tombol untuk mendengarkan narasi.
+            6. Informasi Lainnya - Pilih topik; info muncul di panel kanan dan otomatis dibacakan.
 
-            *Tips:*
-            - Pastikan gambar *jelas* dan *fokus*.
+            Tips:
+            - Pastikan gambar jelas dan fokus.
             - Gunakan pencahayaan baik, hindari bayangan.
-            - Usahakan kemasan *asli* dan penuh dalam frame.
+            - Usahakan kemasan asli dan penuh dalam frame.
             """)
 
 if __name__ == "__main__":

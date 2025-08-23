@@ -101,6 +101,21 @@ div.stAlert {
 
 /* Title area */
 h1.ms-title { margin-bottom: .2rem; }
+
+/* Radio-as-buttons (untuk menu ber-emoji) */
+.ms-radio .stRadio > div { gap: .6rem; }
+.ms-radio .stRadio div[role="radiogroup"] > label { width: 100%; }
+.ms-radio .stRadio div[role="radiogroup"] > label > div {
+  border: 1px solid #18304f; background:#0b1320; color:#e6edf3;
+  border-radius: 12px; padding:.8rem 1rem; cursor:pointer;
+  transition: background .15s ease, transform .05s ease;
+}
+.ms-radio .stRadio div[role="radiogroup"] > label:hover > div {
+  background:#0e1a2b; transform: translateY(-1px);
+}
+.ms-radio .stRadio input:checked + div {
+  border-color:#2a7df0; box-shadow: 0 0 0 1px #2a7df0 inset;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -175,7 +190,6 @@ def speak_pyttsx3(text):
     """
     try:
         engine = pyttsx3.init()
-        # Atur kecepatan & volume agar terdengar lebih natural
         rate = engine.getProperty('rate')
         engine.setProperty('rate', int(rate*0.92))
         volume = engine.getProperty('volume')
@@ -247,7 +261,7 @@ def main():
             help="Format yang didukung: JPG, JPEG, PNG"
         )
 
-        st.markdown("**ATAU**")
+        st.markdown("ATAU")
 
         enable_camera = st.toggle(
             "🔧 Aktifkan Kamera",
@@ -315,8 +329,8 @@ def main():
 
             # Info dasar
             st.markdown(f"""
-            **Golongan:** {info['golongan']}  
-            **Jenis:** {info['jenis']}  
+            Golongan: {info['golongan']}  
+            Jenis: {info['jenis']}  
             """)
 
         # ================== DETAIL INFORMASI ==================
@@ -325,19 +339,18 @@ def main():
 
         with st.expander("🔍 Lihat Detail", expanded=True):
             st.markdown(f"""
-            **Manfaat:** {info['manfaat']}  
-            **Aturan Minum:** {info['aturan_minum']}  
-            **Catatan:** {info['catatan']}  
+            Manfaat: {info['manfaat']}  
+            Aturan Minum: {info['aturan_minum']}  
+            Catatan: {info['catatan']}  
             """)
 
         # ================== PERINGATAN ==================
         st.warning("""
-        ⚠️ **PERINGATAN PENTING:** 
+        ⚠ PERINGATAN PENTING: 
         Aturan minum dapat berbeda-beda pada setiap orang. Ikuti petunjuk dari dokter yang telah memeriksa kondisi Anda.
         """)
 
         # ================== TTS UTAMA (MANUAL) ==================
-        # Teks utama yang lebih manusiawi
         main_text = (
             f"Nama obat ini adalah {info['nama_obat']}. "
             f"Golongan {info['golongan']}. "
@@ -351,24 +364,50 @@ def main():
             # Manual (tidak auto) → tampilkan player kontrol
             speak_gtts(main_text, autoplay=False)
 
-        # ================== INFORMASI LAINNYA (LIST KIRI → PANEL KANAN) ==================
+        # ================== INFORMASI LAINNYA (RADIO KIRI → PANEL KANAN) ==================
         st.markdown("---")
-st.subheader("Informasi Lainnya")
+        st.subheader("📂 Informasi Lainnya")
 
-with st.expander("🔴 Efek Samping"):
-    st.write("Efek samping dari obat ini adalah ...")
-    
-with st.expander("🚫 Pantangan Makanan"):
-    st.write("Hindari makanan ...")
-    
-with st.expander("⚠ Interaksi Negatif"):
-    st.write("Obat ini dapat berinteraksi dengan ...")
-    
-with st.expander("🤔 Jika Lupa Minum?"):
-    st.write("Jika lupa minum obat ini ...")
-    
-with st.expander("📦 Cara Penyimpanan"):
-    st.write("Simpan obat di tempat ...")
+        # Map menu -> (emoji+judul tampilan, field CSV, prefix TTS)
+        MENU_ITEMS = {
+            "efek_samping": ("🔴 Efek Samping", "efek_samping", f"Efek samping dari {info['nama_obat']}: "),
+            "pantangan":    ("🚫 Pantangan Makanan", "pantangan_makanan", "Pantangan makanan: "),
+            "interaksi":    ("⚠ Interaksi Negatif", "interaksi_negatif", "Interaksi negatif: "),
+            "lupa":         ("🤔 Jika Lupa Minum?", "jika_lupa_minum", "Jika lupa minum: "),
+            "simpan":       ("📦 Cara Penyimpanan", "penyimpanan", "Cara penyimpanan: "),
+        }
+
+        option_keys = list(MENU_ITEMS.keys())
+        def _format_label(k): return MENU_ITEMS[k][0]
+
+        left, right = st.columns([1, 2], vertical_alignment="top")
+
+        with left:
+            st.markdown('<div class="ms-radio">', unsafe_allow_html=True)
+            selected_key = st.radio(
+                "Pilih informasi",
+                options=option_keys,
+                format_func=_format_label,
+                index=None,  # tidak memilih apa pun saat awal
+                label_visibility="collapsed",
+                key="ms_radio_select"
+            )
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        with right:
+            panel = st.container()
+            if selected_key:
+                title, field, prefix = MENU_ITEMS[selected_key]
+                value = info.get(field, 'Informasi tidak tersedia')
+
+                st.markdown(f"### {title}")
+                st.markdown(f'<div class="ms-detail">{value}</div>', unsafe_allow_html=True)
+
+                # Hentikan audio lain dan auto-speak konten terpilih
+                stop_all_audio()
+                speak(prefix + str(value), autoplay=True, prefer_local=True)
+            else:
+                panel.empty()
 
     else:
         # ================== TAMPILAN AWAL ==================
@@ -382,19 +421,19 @@ with st.expander("📦 Cara Penyimpanan"):
 
         with st.expander("📖 Panduan Penggunaan", expanded=True):
             st.markdown("""
-            **Langkah-langkah:**
-            1. **Upload Gambar** — Klik "Unggah Gambar Obat" dan pilih file gambar.
-            2. **Atau Ambil Foto** — Aktifkan kamera dan ambil foto (otomatis 1:1).
-            3. **Tunggu Analisis** — AI akan menganalisis gambar obat Anda.
-            4. **Lihat Hasil** — Dapatkan **Detail Informasi** obat.
-            5. **Dengarkan Audio** — Ringkasan **tidak otomatis**; tekan tombol untuk memutar.
-            6. **Informasi Lainnya** — Klik item di daftar; panel kanan muncul & audio langsung memandu.
+            Langkah-langkah:
+            1. Upload Gambar — Klik "Unggah Gambar Obat" dan pilih file gambar.
+            2. Atau Ambil Foto — Aktifkan kamera dan ambil foto (otomatis 1:1).
+            3. Tunggu Analisis — AI akan menganalisis gambar obat Anda.
+            4. Lihat Hasil — Dapatkan Detail Informasi obat.
+            5. Dengarkan Audio — Ringkasan tidak otomatis; tekan tombol untuk memutar.
+            6. Informasi Lainnya — Pilih salah satu menu ber-emoji; panel kanan akan menampilkan detail & suara diputar.
 
-            **Tips:**
+            Tips:
             - Pastikan gambar jelas, tajam, dan tidak blur.
             - Gunakan latar netral; hindari pantulan.
             - Foto kemasan asli untuk akurasi terbaik.
             """)
 
-if __name__ == "__main__":
+if _name_ == "_main_":
     main()

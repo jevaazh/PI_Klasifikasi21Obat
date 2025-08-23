@@ -353,61 +353,22 @@ def main():
 
         # ================== INFORMASI LAINNYA (LIST KIRI → PANEL KANAN) ==================
         st.markdown("---")
-        st.subheader("📂 Informasi Lainnya")
+st.subheader("Informasi Lainnya")
 
-        # Map menu -> (judul tampil, field CSV, pembuka kalimat TTS)
-        MENU_ITEMS = {
-            "efek_samping": ("Efek Samping", "efek_samping", f"Efek samping dari {info['nama_obat']}: "),
-            "pantangan": ("Pantangan Makanan", "pantangan_makanan", "Pantangan makanan: "),
-            "interaksi": ("Interaksi Negatif", "interaksi_negatif", "Interaksi negatif: "),
-            "lupa": ("Jika Lupa Minum?", "jika_lupa_minum", "Jika lupa minum: "),
-            "simpan": ("Cara Penyimpanan", "penyimpanan", "Cara penyimpanan: "),
-        }
-
-        # siapkan state seleksi
-        if "ms_selected" not in st.session_state:
-            st.session_state.ms_selected = None
-
-        left, right = st.columns([1, 2], vertical_alignment="top")
-
-        with left:
-            # Render list sebagai tombol vertikal seragam
-            for key, (title, _, _) in MENU_ITEMS.items():
-                # HTML baris dengan chevron ▶
-                placeholder = st.container()
-                with placeholder:
-                    st.markdown(
-                        f'<div class="ms-list-row">'
-                        f'<span class="chev">▶</span> {title}</div>',
-                        unsafe_allow_html=True
-                    )
-                    # invisible button overlay:
-                    pressed = st.button(f" ", key=f"btn_{key}")
-                # Klik → toggle select
-                if pressed:
-                    if st.session_state.ms_selected == key:
-                        # klik lagi item yang sama → unselect + stop audio
-                        st.session_state.ms_selected = None
-                        with right:  # kosongkan panel kanan
-                            stop_all_audio()
-                            st.empty()
-                    else:
-                        st.session_state.ms_selected = key
-
-        with right:
-            panel = st.container()
-            if st.session_state.ms_selected:
-                k = st.session_state.ms_selected
-                title, field, prefix = MENU_ITEMS[k]
-                value = info.get(field, 'Informasi tidak tersedia')
-                with panel:
-                    st.markdown(f"### {title}")
-                    st.markdown(f'<div class="ms-detail">{value}</div>', unsafe_allow_html=True)
-                    # Auto-speak saat dipilih
-                    speak(prefix + str(value), autoplay=True, prefer_local=True)
-            else:
-                # Panel kosong
-                panel.empty()
+with st.expander("🔴 Efek Samping"):
+    st.write("Efek samping dari obat ini adalah ...")
+    
+with st.expander("🚫 Pantangan Makanan"):
+    st.write("Hindari makanan ...")
+    
+with st.expander("⚠ Interaksi Negatif"):
+    st.write("Obat ini dapat berinteraksi dengan ...")
+    
+with st.expander("🤔 Jika Lupa Minum?"):
+    st.write("Jika lupa minum obat ini ...")
+    
+with st.expander("📦 Cara Penyimpanan"):
+    st.write("Simpan obat di tempat ...")
 
     else:
         # ================== TAMPILAN AWAL ==================

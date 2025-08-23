@@ -47,7 +47,7 @@ hr{ border: none; border-top: 1px solid #e9ecef; margin: 1rem 0; }
 }
 .stButton > button:hover {
     background-color: #e9ecef !important;
-    color: #6c757d !important;
+    color: #0f172a !important;
     border-color: #0f172a !important;
     transform: translateY(-1px);
 }
@@ -58,7 +58,7 @@ hr{ border: none; border-top: 1px solid #e9ecef; margin: 1rem 0; }
   border-radius: 12px;
   padding: 1rem;
   min-height: 220px; /* tinggi seragam */
-  background: #0f172a;
+  background: #0e1117;
 }
 
 /* Radio label as section label */
